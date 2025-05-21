@@ -1,5 +1,6 @@
 from league import League
 from typing import Dict, List, Tuple, Optional
+from collections import Counter, OrderedDict
 
 
 class LeagueStats:
@@ -122,7 +123,6 @@ class LeagueStats:
                     points_given[sub.submitter_id] = points_given.get(
                         sub.submitter_id, 0) + int(vote.points_assigned)
         if votes_cast:
-            from collections import Counter
             most_often_voted_for_id, count = Counter(
                 votes_cast).most_common(1)[0]
             most_often_voted_for = self.league.competitors.get_by_id(
@@ -151,7 +151,6 @@ class LeagueStats:
                 points_received_from[vote.voter_id] = points_received_from.get(
                     vote.voter_id, 0) + int(vote.points_assigned)
         if received_from:
-            from collections import Counter
             most_often_votes_from_id, count = Counter(
                 received_from).most_common(1)[0]
             most_often_votes_from = self.league.competitors.get_by_id(
@@ -170,6 +169,17 @@ class LeagueStats:
                 most_points_from, points_received_from[most_points_from_id])
         else:
             stats['most_points_from'] = None
+
+        # Points received by player (sorted dict: voter_id -> points)
+        stats['points_received_by_player'] = OrderedDict(
+            sorted(points_received_from.items(),
+                   key=lambda x: x[1], reverse=True)
+        )
+
+        # Points given to player (sorted dict: submitter_id -> points)
+        stats['points_given_to_player'] = OrderedDict(
+            sorted(points_given.items(), key=lambda x: x[1], reverse=True)
+        )
 
         return stats
 

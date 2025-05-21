@@ -45,6 +45,31 @@ class CompetitorStats(Static):
             'most_points_from'] and stats['most_points_from'][0] else "N/A"
         most_points_from_count = stats['most_points_from'][1] if stats['most_points_from'] else 0
 
+        # Points received by player (sorted dict: voter_id -> points)
+        points_received_by_player = stats.get('points_received_by_player', {})
+        points_received_lines = []
+        if points_received_by_player:
+            points_received_lines.append("\nPoints received from each player:")
+            for voter_id, points in points_received_by_player.items():
+                voter = league.competitors.get_by_id(voter_id)
+                voter_name = voter.name if voter else voter_id
+                points_received_lines.append(f"  {voter_name}: {points}")
+        else:
+            points_received_lines.append(
+                "\nPoints received from each player: None")
+
+        # Points given to player (sorted dict: submitter_id -> points)
+        points_given_to_player = stats.get('points_given_to_player', {})
+        points_given_lines = []
+        if points_given_to_player:
+            points_given_lines.append("\nPoints given to each player:")
+            for submitter_id, points in points_given_to_player.items():
+                submitter = league.competitors.get_by_id(submitter_id)
+                submitter_name = submitter.name if submitter else submitter_id
+                points_given_lines.append(f"  {submitter_name}: {points}")
+        else:
+            points_given_lines.append("\nPoints given to each player: None")
+
         self.update(
             f"\n[b]{competitor.name}[/b]\n"
             f"Total Votes Received: {stats['total_votes_received']}\n"
@@ -57,6 +82,8 @@ class CompetitorStats(Static):
             f"\n"
             f"Awarded the Most Points To: {most_points_given_to} ({most_points_given_to_count} pts)\n"
             f"Received the Most Points From: {most_points_from} ({most_points_from_count} pts)\n"
+            + "\n".join(points_received_lines)
+            + "\n".join(points_given_lines)
         )
 
 
