@@ -4,6 +4,7 @@ from textual.containers import Container
 from textual.reactive import reactive
 from textual.coordinate import Coordinate
 from textual import events
+from textual.widgets import ListView, ListItem
 
 from league import League
 from league_stats import LeagueStats
@@ -33,7 +34,7 @@ class RoundsTable(DataTable):
             self.add_row(r.name, r.description)
 
 
-class CompetitorStats(Static):
+class CompetitorStats(ListView):
     def update_stats(self, league: League, league_stats: LeagueStats, competitor):
         stats = league_stats.competitor_stats(competitor.id)
         best_submission, best_points = stats['best_submission'] if stats['best_submission'] else (
@@ -51,7 +52,6 @@ class CompetitorStats(Static):
             'most_points_from'] and stats['most_points_from'][0] else "N/A"
         most_points_from_count = stats['most_points_from'][1] if stats['most_points_from'] else 0
 
-        # Points received by player (sorted dict: voter_id -> points)
         points_received_by_player = stats.get('points_received_by_player', {})
         points_given_to_player = stats.get('points_given_to_player', {})
 
@@ -76,34 +76,40 @@ class CompetitorStats(Static):
         else:
             given_lines.append("Points given to each player: None")
 
-        # Pad the shorter list
         max_len = max(len(received_lines), len(given_lines))
         received_lines += [""] * (max_len - len(received_lines))
         given_lines += [""] * (max_len - len(given_lines))
 
-        # Combine side by side
         side_by_side = [
             f"{left:<35}   {right}"
             for left, right in zip(received_lines, given_lines)
         ]
-        side_by_side_str = "\n".join(side_by_side)
 
-        self.update(
-            f"\n[b]{competitor.name}[/b]\n"
-            f"Total Votes Received: {stats['total_votes_received']}\n"
-            f"Rounds Participated: {stats['rounds_participated']}\n"
-            f"\n"
-            f"Best Submission: {getattr(best_submission, 'title', 'N/A')} ({best_points} pts)\n"
-            f"Average Score Per Round: {stats['avg_score_per_round']:.2f}\n"
-            f"\n"
-            f"Voted Most Often For: {most_often_voted_for} ({most_often_voted_for_count} times)\n"
-            f"Voted Most Often From: {most_often_votes_from} ({most_often_votes_from_count} times)\n"
-            f"\n"
-            f"Awarded the Most Points To: {most_points_given_to} ({most_points_given_to_count} pts)\n"
-            f"Received the Most Points From: {most_points_from} ({most_points_from_count} pts)\n"
-            f"\n"
-            f"{side_by_side_str}"
-        )
+        # Clear and repopulate the ListView
+        self.clear()
+        self.append(ListItem(Static(f"[b]{competitor.name}[/b]")))
+        self.append(
+            ListItem(Static(f"Total Votes Received: {stats['total_votes_received']}")))
+        self.append(
+            ListItem(Static(f"Rounds Participated: {stats['rounds_participated']}")))
+        self.append(ListItem(Static("")))
+        self.append(ListItem(Static(
+            f"Best Submission: {getattr(best_submission, 'title', 'N/A')} ({best_points} pts)")))
+        self.append(ListItem(
+            Static(f"Average Score Per Round: {stats['avg_score_per_round']:.2f}")))
+        self.append(ListItem(Static("")))
+        self.append(ListItem(Static(
+            f"Voted Most Often For: {most_often_voted_for} ({most_often_voted_for_count} times)")))
+        self.append(ListItem(Static(
+            f"Voted Most Often From: {most_often_votes_from} ({most_often_votes_from_count} times)")))
+        self.append(ListItem(Static("")))
+        self.append(ListItem(Static(
+            f"Awarded the Most Points To: {most_points_given_to} ({most_points_given_to_count} pts)")))
+        self.append(ListItem(Static(
+            f"Received the Most Points From: {most_points_from} ({most_points_from_count} pts)")))
+        self.append(ListItem(Static("")))
+        for line in side_by_side:
+            self.append(ListItem(Static(line)))
 
 
 class LeagueApp(App):
@@ -125,8 +131,7 @@ class LeagueApp(App):
         self.status = Static(
             "Press 'l' for leaderboard, 'r' for rounds, or 'q' to quit.")
         self.main_container = Container()
-        self.stats_panel = CompetitorStats(
-            "Select a competitor and press Enter or click for stats.")
+        self.stats_panel = CompetitorStats()
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -164,12 +169,12 @@ class LeagueApp(App):
         leaderboard = self.league.get_leaderboard()
         if 0 <= competitor_idx < len(leaderboard):
             competitor = leaderboard[competitor_idx]['competitor']
-            self.stats_panel.update_stats(
-                self.league, self.league_stats, competitor)
             self.status.update(
                 f"Stats for {competitor.name}. Press Esc to return.")
             await self.main_container.remove_children()
             await self.main_container.mount(self.stats_panel)
+            self.stats_panel.update_stats(
+                self.league, self.league_stats, competitor)
             self.stats_panel.focus()
             self.view_mode = "stats"
 
