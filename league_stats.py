@@ -170,15 +170,14 @@ class LeagueStats:
         else:
             stats['most_points_from'] = None
 
-        # Points received by player (sorted dict: voter_id -> points)
+        # Points received by player (sorted dict: voter_id -> points, remove 0s)
         stats['points_received_by_player'] = OrderedDict(
-            sorted(points_received_from.items(),
-                   key=lambda x: x[1], reverse=True)
+            (k, v) for k, v in sorted(points_received_from.items(), key=lambda x: x[1], reverse=True) if v > 0
         )
 
-        # Points given to player (sorted dict: submitter_id -> points)
+        # Points given to player (sorted dict: submitter_id -> points, remove 0s)
         stats['points_given_to_player'] = OrderedDict(
-            sorted(points_given.items(), key=lambda x: x[1], reverse=True)
+            (k, v) for k, v in sorted(points_given.items(), key=lambda x: x[1], reverse=True) if v > 0
         )
 
         stats['avg_score_per_round'] = self.league.tally_competitor_score(

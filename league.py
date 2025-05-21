@@ -35,8 +35,6 @@ class League:
     # Public Methods
     ############################################################################
 
-    # --- Filtering Methods ---
-
     def get_submissions_by_competitor(self, competitor_id: str) -> List[Submission]:
         return self.submissions.get_by_submitter_id(competitor_id)
 
@@ -47,7 +45,9 @@ class League:
         return self.votes.get_by_round_id(round_id)
 
     def get_votes_by_competitor(self, competitor_id: str) -> List[Vote]:
-        """Get all votes for all submissions by a competitor."""
+        """
+        Get all votes for all submissions by a competitor.
+        """
         competitor_subs = self.get_submissions_by_competitor(competitor_id)
         uris = {s.spotify_uri for s in competitor_subs}
         return [v for v in self.votes.get_all() if v.spotify_uri in uris]
@@ -56,15 +56,32 @@ class League:
         return self.votes.get_by_spotify_uri(spotify_uri)
 
     def get_rounds_for_competitor(self, competitor_id: str) -> List[Round]:
-        """Get all rounds in which a competitor has submitted."""
+        """
+        Get all rounds in which a competitor has submitted.
+        """
         round_ids = {
             s.round_id for s in self.get_submissions_by_competitor(competitor_id)}
         return [r for r in self.rounds.get_all() if r.id in round_ids]
 
-    # --- Aggregation Methods ---
+    def get_comments_for_submission(self, spotify_uri: str) -> List[str]:
+        """
+        Get all comments for a given submission.
+        """
+        return [v.comment for v in self.get_votes_for_submission(spotify_uri) if v.comment]
+
+    def get_comments_for_competitor(self, competitor_id: str) -> List[str]:
+        """
+        Get all comments for all submissions by a competitor.
+        """
+        comments = []
+        for sub in self.get_submissions_by_competitor(competitor_id):
+            comments.extend(self.get_comments_for_submission(sub.spotify_uri))
+        return comments
 
     def tally_competitor_score(self, competitor_id: str) -> int:
-        """Sum all points assigned to all submissions by this competitor."""
+        """
+        Sum all points assigned to all submissions by this competitor.
+        """
         votes = self.get_votes_by_competitor(competitor_id)
         return sum(int(v.points_assigned) for v in votes if str(v.points_assigned).isdigit())
 
@@ -99,19 +116,6 @@ class League:
             })
         leaderboard.sort(key=lambda x: x['score'], reverse=True)
         return leaderboard
-
-    def get_comments_for_submission(self, spotify_uri: str) -> List[str]:
-        """Get all comments for a given submission."""
-        return [v.comment for v in self.get_votes_for_submission(spotify_uri) if v.comment]
-
-    def get_comments_for_competitor(self, competitor_id: str) -> List[str]:
-        """Get all comments for all submissions by a competitor."""
-        comments = []
-        for sub in self.get_submissions_by_competitor(competitor_id):
-            comments.extend(self.get_comments_for_submission(sub.spotify_uri))
-        return comments
-
-    # --- Utility Methods ---
 
     def get_competitor_by_name(self, name: str) -> Optional[Competitor]:
         return self.competitors.get_by_name(name)

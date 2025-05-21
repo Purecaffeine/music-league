@@ -53,28 +53,40 @@ class CompetitorStats(Static):
 
         # Points received by player (sorted dict: voter_id -> points)
         points_received_by_player = stats.get('points_received_by_player', {})
-        points_received_lines = []
+        points_given_to_player = stats.get('points_given_to_player', {})
+
+        received_lines = []
+        given_lines = []
+
         if points_received_by_player:
-            points_received_lines.append("\nPoints received from each player:")
+            received_lines.append("Points received from each player:")
             for voter_id, points in points_received_by_player.items():
                 voter = league.competitors.get_by_id(voter_id)
                 voter_name = voter.name if voter else voter_id
-                points_received_lines.append(f"  {voter_name}: {points}")
+                received_lines.append(f"{voter_name}: {points}")
         else:
-            points_received_lines.append(
-                "\nPoints received from each player: None")
+            received_lines.append("Points received from each player: None")
 
-        # Points given to player (sorted dict: submitter_id -> points)
-        points_given_to_player = stats.get('points_given_to_player', {})
-        points_given_lines = []
         if points_given_to_player:
-            points_given_lines.append("\nPoints given to each player:")
+            given_lines.append("Points given to each player:")
             for submitter_id, points in points_given_to_player.items():
                 submitter = league.competitors.get_by_id(submitter_id)
                 submitter_name = submitter.name if submitter else submitter_id
-                points_given_lines.append(f"  {submitter_name}: {points}")
+                given_lines.append(f"{submitter_name}: {points}")
         else:
-            points_given_lines.append("\nPoints given to each player: None")
+            given_lines.append("Points given to each player: None")
+
+        # Pad the shorter list
+        max_len = max(len(received_lines), len(given_lines))
+        received_lines += [""] * (max_len - len(received_lines))
+        given_lines += [""] * (max_len - len(given_lines))
+
+        # Combine side by side
+        side_by_side = [
+            f"{left:<35}   {right}"
+            for left, right in zip(received_lines, given_lines)
+        ]
+        side_by_side_str = "\n".join(side_by_side)
 
         self.update(
             f"\n[b]{competitor.name}[/b]\n"
@@ -89,8 +101,8 @@ class CompetitorStats(Static):
             f"\n"
             f"Awarded the Most Points To: {most_points_given_to} ({most_points_given_to_count} pts)\n"
             f"Received the Most Points From: {most_points_from} ({most_points_from_count} pts)\n"
-            + "\n".join(points_received_lines)
-            + "\n".join(points_given_lines)
+            f"\n"
+            f"{side_by_side_str}"
         )
 
 
