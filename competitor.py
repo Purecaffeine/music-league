@@ -8,6 +8,7 @@ removal, and retrieval.
 """
 
 import csv
+from typing import List, Optional
 
 
 class Competitor:
@@ -15,11 +16,11 @@ class Competitor:
     Represents a competitor with an ID and name.
     """
 
-    def __init__(self, competitor_id, name):
+    def __init__(self, competitor_id: str, name: str) -> None:
         self.id = competitor_id
         self.name = name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Competitor(id='{self.id}', name='{self.name}')"
 
 
@@ -31,7 +32,7 @@ class CompetitorsManager:
     # Special Methods
     ############################################################################
 
-    def __init__(self, csv_path):
+    def __init__(self, csv_path: str) -> None:
         self.csv_path = csv_path
         self.competitors = []
         self._load_competitors()
@@ -39,7 +40,7 @@ class CompetitorsManager:
     ############################################################################
     # Public Methods
     ############################################################################
-    def get_by_id(self, competitor_id):
+    def get_by_id(self, competitor_id: str) -> Optional[Competitor]:
         """
         Returns the first Competitor with the given ID, or None if not found.
         """
@@ -48,7 +49,7 @@ class CompetitorsManager:
                 return competitor
         return None
 
-    def get_by_name(self, name):
+    def get_by_name(self, name: str) -> Optional[Competitor]:
         """
         Returns the first Competitor with the given name, or None if not found.
         """
@@ -57,13 +58,13 @@ class CompetitorsManager:
                 return competitor
         return None
 
-    def get_all(self):
+    def get_all(self) -> List[Competitor]:
         """
         Returns a list of all competitors
         """
         return self.competitors
 
-    def add_competitor(self, competitor_id, name):
+    def add_competitor(self, competitor_id: str, name: str) -> Optional[Competitor]:
         """
         Adds a new competitor with the given ID and name.
         """
@@ -74,7 +75,7 @@ class CompetitorsManager:
             return competitor
         return None
 
-    def remove_competitor(self, competitor_id):
+    def remove_competitor(self, competitor_id: str) -> bool:
         """
         Removes the competitor with the given ID.
         Returns True if removed, False if not found.
@@ -89,14 +90,14 @@ class CompetitorsManager:
     ############################################################################
     # Private Methods
     ############################################################################
-    def _save_competitors(self):
+    def _save_competitors(self) -> None:
         with open(self.csv_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Name'])
             for competitor in self.competitors:
                 writer.writerow([competitor.id, competitor.name])
 
-    def _load_competitors(self):
+    def _load_competitors(self) -> None:
         with open(self.csv_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -113,8 +114,13 @@ if __name__ == "__main__":
         print("Added competitor:", new_competitor)
     else:
         print("Competitor already exists.")
-    print("All competitors after addition:", manager.get_all())
+
+    print("All competitors after addition:")
+    for competitor in manager.get_all():
+        print(competitor)
 
     # Remove the added competitor
     manager.remove_competitor('C004')
-    print("All competitors after removal:", manager.get_all())
+    print("All competitors after removal:")
+    for competitor in manager.get_all():
+        print(competitor)
