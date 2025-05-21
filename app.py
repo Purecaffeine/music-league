@@ -12,11 +12,17 @@ from league_stats import LeagueStats
 class LeaderboardTable(DataTable):
     def update_leaderboard(self, league: League):
         self.clear(True)
-        self.add_columns("Rank", "Competitor", "Score")
+        self.add_columns("Rank", "Competitor", "Score",
+                         "# Rounds", "Avg Score")
         leaderboard = league.get_leaderboard()
-        for idx, entry in enumerate(leaderboard, 1):
+        for rank, entry, in enumerate(leaderboard, 1):
             self.add_row(
-                str(idx), entry['competitor'].name, str(entry['score']))
+                str(rank),
+                entry['name'],
+                str(entry['score']),
+                str(entry['rounds']),
+                str(f"{entry['avg_score']:.1f}"),
+            )
 
 
 class RoundsTable(DataTable):
@@ -76,6 +82,7 @@ class CompetitorStats(Static):
             f"Rounds Participated: {stats['rounds_participated']}\n"
             f"\n"
             f"Best Submission: {getattr(best_submission, 'title', 'N/A')} ({best_points} pts)\n"
+            f"Average Score Per Round: {stats['avg_score_per_round']:.2f}\n"
             f"\n"
             f"Voted Most Often For: {most_often_voted_for} ({most_often_voted_for_count} times)\n"
             f"Voted Most Often From: {most_often_votes_from} ({most_often_votes_from_count} times)\n"
@@ -107,7 +114,7 @@ class LeagueApp(App):
             "Press 'l' for leaderboard, 'r' for rounds, or 'q' to quit.")
         self.main_container = Container()
         self.stats_panel = CompetitorStats(
-            "Select a competitor and press Enter or double-click for stats.")
+            "Select a competitor and press Enter or click for stats.")
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -121,7 +128,7 @@ class LeagueApp(App):
     async def action_show_leaderboard(self):
         self.view_mode = "leaderboard"
         self.status.update(
-            "Leaderboard view. Use arrows, Enter or double-click for stats, 'r' for rounds.")
+            "Leaderboard view. Use arrows, Enter or click for stats, 'r' for rounds.")
         self.leaderboard_table.update_leaderboard(self.league)
         await self.main_container.remove_children()
         await self.main_container.mount(self.leaderboard_table)

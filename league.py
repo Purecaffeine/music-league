@@ -88,7 +88,15 @@ class League:
         leaderboard = []
         for competitor in self.competitors.get_all():
             score = self.tally_competitor_score(competitor.id)
-            leaderboard.append({'competitor': competitor, 'score': score})
+            rounds = len(self.get_rounds_for_competitor(competitor.id))
+            avg_score_per_round = score / rounds if rounds else 0
+            leaderboard.append({
+                'competitor': competitor,
+                'score': score,
+                'rounds': len(self.get_rounds_for_competitor(competitor.id)),
+                'avg_score': avg_score_per_round,
+                'name': competitor.name
+            })
         leaderboard.sort(key=lambda x: x['score'], reverse=True)
         return leaderboard
 

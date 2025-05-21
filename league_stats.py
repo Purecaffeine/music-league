@@ -181,6 +181,9 @@ class LeagueStats:
             sorted(points_given.items(), key=lambda x: x[1], reverse=True)
         )
 
+        stats['avg_score_per_round'] = self.league.tally_competitor_score(
+            competitor_id) / len(rounds) if rounds else 0
+
         return stats
 
 
